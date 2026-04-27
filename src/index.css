@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+body {
+  font-family: 'Rubik', sans-serif;
+  background: hsl(238, 40%, 52%);
+}
