@@ -4,7 +4,7 @@ import replyIcon from "/public/images/icon-reply.svg";
 import deleteIcon from "/public/images/icon-delete.svg";
 import editIcon from "/public/images/icon-edit.svg";
 
-import { type Comment, type Reply } from "../types";
+import type { Comment, Reply } from "../types";
 
 type CommentCardProps = {
   comment: Comment;
@@ -13,15 +13,17 @@ type CommentCardProps = {
   onDownvote: () => void;
   onReply: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 };
 
 type ReplyCardProps = {
   reply: Reply;
-  currentUser:string
+  currentUser: string;
   onUpvote: () => void;
   onDownvote: () => void;
   onReply: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 };
 
 export default function CommentCard({
@@ -31,6 +33,7 @@ export default function CommentCard({
   onDownvote,
   onReply,
   onDelete,
+  onEdit,
 }: CommentCardProps) {
   const isCurrentUser = comment.user.username === currentUser;
 
@@ -67,7 +70,7 @@ export default function CommentCard({
             >
               <img src={deleteIcon} alt="delete" /> Delete
             </button>
-            <button className="flex items-center gap-2 text-[#45429b]">
+            <button onClick={onEdit} className="flex items-center gap-2 text-[#45429b]">
               <img src={editIcon} alt="edit" /> Edit
             </button>
           </div>
@@ -103,9 +106,9 @@ export function RepliesCard({
   onDownvote,
   onReply,
   onDelete,
+  onEdit,
 }: ReplyCardProps) {
-
-const isCurrentUser = reply.user.username === currentUser
+  const isCurrentUser = reply.user.username === currentUser;
 
   return (
     <article
@@ -139,7 +142,7 @@ const isCurrentUser = reply.user.username === currentUser
             >
               <img src={deleteIcon} alt="delete-icon" /> Delete
             </button>
-            <button className="flex items-center gap-2 text-[16px] font-medium text-[#45429b] cursor-pointer">
+            <button onClick={onEdit} className="flex items-center gap-2 text-[16px] font-medium text-[#45429b] cursor-pointer">
               <img src={editIcon} alt="edit" /> Edit
             </button>
           </div>

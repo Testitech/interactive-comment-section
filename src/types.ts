@@ -23,5 +23,5 @@ export type Comment = {
       png: string;
     };
   };
-  replies?: Reply[];
+  replies: Reply[]; // prevent recurssions
 };

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import data from "../db/data.json";
 import CommentCard, { RepliesCard } from "./CommentCard";
+// import { Comment, Reply } from "../types";
 
 export default function CommentList() {
   const [comments, setComments] = useState(data.comments);
@@ -32,11 +33,44 @@ export default function CommentList() {
 
   const [replyingToId, setReplyingToId] = useState<number | null>(null);
 
+  const [newContent, setContent] = useState("");
+  const [editContentId, setEditContentId] = useState<number | string | null>(
+    null,
+  );
+
   const deleteComment = (id: number) => {
     console.log("trying to delete comment", id, typeof id);
     console.log("current comments", comments);
 
-    setComments(comments.filter((c) => c.id !== id));
+    setComments((prev) =>
+      prev
+        .filter((comment) => comment.id !== id)
+        .map((comment) => ({
+          ...comment,
+          replies: comment.replies.filter((reply) => reply.id !== id),
+        })),
+    );
+  };
+
+  const editContent = (id: number, newData: string) => {
+    setComments((eoc) =>
+      eoc.map((newcon) => {
+        if (newcon.id === id) {
+          return { ...newcon, content: newData };
+        }
+
+        if (newcon.replies && newcon.replies.length > 0) {
+          return {
+            ...newcon,
+            replies: newcon.replies.map((rep) =>
+              rep.id === id ? { ...rep, content: newData } : rep,
+            ),
+          };
+        }
+
+        return newcon;
+      }),
+    );
   };
 
   return (
@@ -50,6 +84,10 @@ export default function CommentList() {
             onDownvote={() => changeScore(comment.id, -1)}
             onReply={() => setReplyingToId(comment.id)}
             onDelete={() => deleteComment(comment.id)}
+            onEdit={() => {
+              setEditContentId(comment.id);
+              setContent(comment.content);
+            }}
           />
 
           {replyingToId === comment.id && (
@@ -80,20 +118,68 @@ export default function CommentList() {
             </div>
           )}
 
+          {editContentId === comment.id ? (
+            <div className="">
+              <textarea
+                name=""
+                id=""
+                value={newContent}
+                onChange={(e) => setEditContentId(e.target.value)}
+              ></textarea>
+
+              <button
+                onClick={() => {
+                  editContent(comment.id, newContent);
+                  setEditContentId(null);
+                  setContent("");
+                }}
+              >
+                Update
+              </button>
+            </div>
+          ) : (
+            <p>{""}</p>
+          )}
+
           {/* replies */}
           {comment.replies.length > 0 && (
             <div className="sm:ml-20 ml-16 flex flex-col gap-3 border-l border-gray-400 pl-4">
-              {comment.replies.map((reply) => (
-                <RepliesCard
-                  key={reply.id}
-                  reply={reply}
-                  currentUser={data.currentUser.username}
-                  onUpvote={() => changeScore(reply.id, +1)}
-                  onDownvote={() => changeScore(reply.id, -1)}
-                  onReply={() => setReplyingToId(reply.id)}
-                  onDelete={() => deleteComment(reply.id)}
-                />
-              ))}
+              {comment.replies.map((reply) =>
+                editContentId === reply.id ? (
+                  <div key={reply.id} className="">
+                    <textarea
+                      name=""
+                      id=""
+                      value={newContent}
+                      onChange={(e) => setEditContentId(e.target.value)}
+                    ></textarea>
+
+                    <button
+                      onClick={() => {
+                        editContent(reply.id, newContent);
+                        setEditContentId(null);
+                        setContent("");
+                      }}
+                    >
+                      Update
+                    </button>
+                  </div>
+                ) : (
+                  <RepliesCard
+                    key={reply.id}
+                    reply={reply}
+                    currentUser={data.currentUser.username}
+                    onUpvote={() => changeScore(reply.id, +1)}
+                    onDownvote={() => changeScore(reply.id, -1)}
+                    onReply={() => setReplyingToId(reply.id)}
+                    onDelete={() => deleteComment(reply.id)}
+                    onEdit={() => {
+                      setEditContentId(reply.id);
+                      setContent(reply.content);
+                    }}
+                  />
+                ),
+              )}
             </div>
           )}
         </div>
