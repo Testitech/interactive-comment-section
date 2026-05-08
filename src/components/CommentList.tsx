@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import data from "../db/data.json";
 import CommentCard, { RepliesCard } from "./CommentCard";
-// import { Comment, Reply } from "../types";
+import { type Comment } from "../types";
 
 export default function CommentList() {
-  const [comments, setComments] = useState(data.comments);
+  const [comments, setComments] = useState<Comment[]>(() => {
+    const savedComments = localStorage.getItem("comments");
+
+    return savedComments ? JSON.parse(savedComments) : data.comments;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("comments", JSON.stringify(comments));
+  }, [comments]);
 
   const [newComment, setNewComment] = useState("");
 
@@ -204,51 +212,91 @@ export default function CommentList() {
             {/* replies */}
             {comment.replies.length > 0 && (
               <div className="sm:ml-20 ml-16 flex flex-col gap-3 border-l border-gray-400 pl-4">
-                {comment.replies.map((reply) =>
-                  editContentId === reply.id ? (
-                    <div className="bg-white border border-gray-100 rounded-lg p-4 max-w-2xl flex flex-col gap-3">
-                      <textarea
-                        value={newContent}
-                        onChange={(e) => setNewContent(e.target.value)}
-                        rows={3}
-                        className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:border-[#45429b] transition-colors duration-200"
-                      />
-                      <div className="flex justify-end">
-                        <button
-                          className="bg-[#45429b] hover:bg-[#817fbe] text-white px-6 py-2 text-sm font-medium rounded-lg cursor-pointer transition-colors duration-300"
-                          onClick={() => {
-                            if (!newContent.trim()) return;
-                            editContent(reply.id, newContent);
-                            setEditContentId(null);
-                            setNewContent("");
-                          }}
-                        >
-                          Update
-                        </button>
+                {comment.replies.map((reply) => (
+                  <div key={reply.id} className="flex flex-col gap-3">
+                    {editContentId === reply.id ? (
+                      <div className="bg-white border border-gray-100 rounded-lg p-4 max-w-2xl flex flex-col gap-3">
+                        <textarea
+                          value={newContent}
+                          onChange={(e) => setNewContent(e.target.value)}
+                          rows={3}
+                          className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:border-[#45429b]"
+                        />
+
+                        <div className="flex justify-end">
+                          <button
+                            className="bg-[#45429b] text-white px-6 py-2 rounded-lg"
+                            onClick={() => {
+                              if (!newContent.trim()) return;
+
+                              editContent(reply.id, newContent);
+                              setEditContentId(null);
+                              setNewContent("");
+                            }}
+                          >
+                            Update
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <RepliesCard
-                      key={reply.id}
-                      reply={reply}
-                      currentUser={data.currentUser.username}
-                      onUpvote={() => changeScore(reply.id, +1)}
-                      onDownvote={() => changeScore(reply.id, -1)}
-                      onReply={() => {
-                        setReplyTargetId({
-                          commentId: comment.id,
-                          replyId: reply.id,
-                        });
-                        setReplyingToUsername(reply.user.username);
-                      }}
-                      onDelete={() => deleteComment(reply.id)}
-                      onEdit={() => {
-                        setEditContentId(reply.id);
-                        setNewContent(reply.content);
-                      }}
-                    />
-                  ),
-                )}
+                    ) : (
+                      <RepliesCard
+                        reply={reply}
+                        currentUser={data.currentUser.username}
+                        onUpvote={() => changeScore(reply.id, 1)}
+                        onDownvote={() => changeScore(reply.id, -1)}
+                        onReply={() => {
+                          setReplyTargetId({
+                            commentId: comment.id,
+                            replyId: reply.id,
+                          });
+
+                          setReplyingToUsername(reply.user.username);
+                        }}
+                        onDelete={() => deleteComment(reply.id)}
+                        onEdit={() => {
+                          setEditContentId(reply.id);
+                          setNewContent(reply.content);
+                        }}
+                      />
+                    )}
+
+                    {/* reply textarea under exact reply */}
+                    {replyTargetId?.replyId === reply.id && (
+                      <div className="bg-white p-4 border border-gray-100 rounded-lg flex flex-col gap-3">
+                        <textarea
+                          value={newContent}
+                          onChange={(e) => setNewContent(e.target.value)}
+                          rows={3}
+                          placeholder={`Replying to @${reply.user.username}`}
+                          className="w-full border border-gray-200 rounded-lg p-3 text-sm resize-none outline-none focus:border-[#45429b]"
+                        />
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => {
+                              handleSend(newContent);
+                              setNewContent("");
+                              setReplyTargetId(null);
+                            }}
+                            className="bg-[#45429b] text-white px-5 py-2 rounded-lg"
+                          >
+                            Send
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setReplyTargetId(null);
+                              setNewContent("");
+                            }}
+                            className="bg-red-500 text-white px-5 py-2 rounded-lg"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
